@@ -8,6 +8,11 @@
     "i915"  # necessary for console output early in the boot process
   ];
 
+  # From https://github.com/raphael/linux-samus
+  boot.extraModprobeConfig = ''
+    options snd slots=snd_soc_sst_bdw_rt5677_mach,snd-hda-intel
+  '';
+
   nixpkgs.config = {
     packageOverrides = pkgs: {
 
@@ -21,11 +26,17 @@
   hardware.cpu.intel.updateMicrocode = true;
   nixpkgs.config.allowUnfree = true;
 
-  i18n = {
-    consoleFont = "lat9w-16";
-    consoleKeyMap = "us";
-    defaultLocale = "en_US.UTF-8";
+  powerManagement = {
+    enable = true;
+    cpuFreqGovernor = "powersave";
   };
 
-  powerManagement.cpuFreqGovernor = "powersave";
+  hardware.enableAllFirmware = true;
+
+  hardware.pulseaudio.enable = true;
+  hardware.bluetooth.enable = true;
+
+  hardware.opengl.enable = true;
+  hardware.opengl.driSupport = true;
+  hardware.opengl.s3tcSupport = true;
 }

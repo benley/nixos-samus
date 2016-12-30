@@ -4,10 +4,11 @@
 
 { config, pkgs, ... }:
 
-{
+rec {
   imports = [
     ./hardware-configuration.nix
     ./pixel.nix
+    ./apps.nix
   ];
 
   boot.loader.grub.enable = true;
@@ -15,29 +16,27 @@
   boot.loader.grub.device = "/dev/disk/by-id/ata-HTS721010G9SA00_MPDZN7Y0J4W9ZL";
   #boot.loader.grub.enableCryptodisk = true;
 
-  networking.hostName = "pixel";
-  #networking.wireless.enable = true;
-  networking.networkmanager.enable = true;
+  networking = {
+    hostName = "pixel";
+    hostId = "a8c08f02";
 
-  # i18n = {
-  #   consoleFont = "Lat2-Terminus16";
-  #   consoleKeyMap = "us";
-  #   defaultLocale = "en_US.UTF-8";
-  # };
+    # One of these, not both:
+    networkmanager.enable = true;
+    wireless.enable = !networking.networkmanager.enable;
+  };
+
+  i18n = {
+    consoleFont = "Lat2-Terminus16";
+    consoleKeyMap = "us";
+    defaultLocale = "en_US.UTF-8";
+  };
 
   time.timeZone = "US/Pacific";
 
-  # environment.systemPackages = with pkgs; [
-  #   wget
-  # ];
+  environment.systemPackages = with pkgs; [ wget curl git ];
 
   # services.openssh.enable = true;
   # services.printing.enable = true;
-
-  hardware.enableAllFirmware = true;
-  hardware.opengl.enable = true;
-  hardware.opengl.driSupport = true;
-  #hardware.opengl.s3tcSupport = true;
 
   services.xserver = {
     enable = true;
@@ -51,39 +50,42 @@
     desktopManager.gnome3.enable = true;
 
     displayManager.slim.enable = true;
-    displayManager.desktopManagerHandlesLidAndPower = false;
-
-    #windowManager.i3.enable = true;
+    displayManager.desktopManagerHandlesLidAndPower = true;
 
     wacom.enable = true;
   };
 
   services.xserver.synaptics = {
     enable = true;
-    buttonsMap = [ 1 2 3 ];
-    fingersMap = [ 1 2 3 ];
+    buttonsMap = [ 1 3 2 ];  # Not a typo, and
+    fingersMap = [ 1 2 3 ];  # yes it is weird.
     palmDetect = true;
     tapButtons = true;
     twoFingerScroll = true;
     vertEdgeScroll = false;
     horizontalScroll = true;
+    minSpeed = "1.5";
+    maxSpeed = "2.0";
+    accelFactor = "0.3";
   };
 
   # services.xserver.displayManager.kdm.enable = true;
   # services.xserver.desktopManager.kde4.enable = true;
 
-  #services.redshift = {
-  #  enable = true;
-  #  latitude = "37.7749300";
-  #  longitude = "-122.4194200";
-  #  temperature.day = 6500;
-  #  temperature.night = 3500;
-  #};
+  services.redshift = {
+    enable = true;
+    latitude = "37.7749300";
+    longitude = "-122.4194200";
+    temperature.day = 6500;
+    temperature.night = 3500;
+  };
 
-  services.avahi.enable = true;
-  services.avahi.ipv4 = true;
-  services.avahi.ipv6 = true;
-  services.avahi.nssmdns = true;
+  services.avahi = {
+    enable = true;
+    ipv4 = true;
+    ipv6 = true;
+    nssmdns = true;
+  };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.extraUsers.benley = {
@@ -98,4 +100,29 @@
   # The NixOS release to be compatible with for stateful data such as databases.
   system.stateVersion = "15.09";
 
+  nix = {
+    daemonIONiceLevel = 10;
+    daemonNiceLevel = 10;
+    extraOptions = ''
+      auto-optimise-store = true
+    '';
+    buildCores = 4;
+    # maxJobs = 4;  # defined in hardware-configuration.nix
+    trustedBinaryCaches = [
+      "https://hydra.nixos.org/"
+    ];
+    # distributedBuilds = true;
+    # buildMachines = [
+    #   { hostName = "ein.local";
+    #     maxJobs = 4;
+    #     sshKey = "/root/.ssh/id_ein_auto";
+    #     sshUser = "nix";
+    #     system = "x86_64-linux"; }
+    #   { hostName = "nyanbox.local";
+    #     maxJobs = 4;
+    #     sshKey = "/root/.ssh/id_ein_auto";
+    #     sshUser = "nix";
+    #     system = "x86_64-linux"; }
+    # ];
+  };
 }
